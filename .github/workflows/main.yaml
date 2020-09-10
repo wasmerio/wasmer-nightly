@@ -167,7 +167,7 @@ jobs:
         with:
           tag_name: ${{ needs.setup.outputs.VERSION }}
           release_name: Release ${{ needs.setup.output.VERSION }}
-          draft: true # leaving this as a draft while this workflow is being developed
+          draft: false
           prerelease: false
       - name: Upload Release Asset Windows
         id: upload-release-asset-windows

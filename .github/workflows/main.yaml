@@ -21,7 +21,7 @@ jobs:
         shell: bash
         run: |
           DOING_RELEASE=1
-          VERSION="wasmer-nightly-$(date +'%Y-%m-%d')"
+          VERSION="wasmer-nightly-$(date +'%Y-%m-%d' -d 'yesterday')"
           echo ::set-output name=VERSION::${VERSION}
           echo ::set-output name=DOING_RELEASE::${DOING_RELEASE}
           echo $VERSION

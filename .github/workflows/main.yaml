@@ -153,13 +153,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           path: artifacts
-      - name: Debug aarch64 artifact
-        run: |
-          ls artifacts
-          echo "---"
-          ls artifacts/wasmer-linux-aarch64
-          echo "---"
-          ls artifacts/wasmer-linux-amd64
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -207,6 +200,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/wasmer-linux-aarch64/wasmer-linux-aarch64.tar.gz
+          asset_path: artifacts/wasmer-linux-aarch64/wasmer-linux-arm64.tar.gz
           asset_name: wasmer-linux-aarch64.tar.gz
           asset_content_type: application/gzip

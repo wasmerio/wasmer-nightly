@@ -131,21 +131,13 @@ jobs:
         run: brew install automake
         if: matrix.os == 'macos-latest'
       - name: Build C API
-        run: |
-          make build-capi
-        if: matrix.os != 'windows-latest'
-      - name: Build C API on Windows
         run: make build-capi
-        if: matrix.os == 'windows-latest'
       - name: Build Wasmer binary
-        run: |
-          make build-wasmer
+        run: make build-wasmer
       - name: Build Wapm binary
-        run: |
-          make build-wapm
+        run: make build-wapm
       - name: Package Wasmer
-        run: |
-          make package
+        run: make package
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -161,6 +153,13 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           path: artifacts
+      - name: Debug aarch64 artifact
+        run: |
+          ls artifacts
+          echo "---"
+          ls artifacts/wasmer-linux-aarch64
+          echo "---"
+          ls artifacts/wasmer-linux-amd64
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1

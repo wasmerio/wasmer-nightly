@@ -151,7 +151,11 @@ jobs:
         if: ${{ failure() }}
         run: |
           ACTIONS_URL=$(printf "https://github.com/%s/actions/runs/%s" $GITHUB_REPOSITORY $GITHUB_RUN_ID)
+          echo $ACTIONS_URL
+          echo $GITHUB_REPOSITORY
+          echo $GITHUB_RUN_ID
           MESSAGE_TEXT=$(printf '{"text":":fire: Build failed :fire:. %s"}' $ACTIONS_URL)
+          echo $MESSAGE_TEXT
           curl -X POST -H 'Content-type: application/json' --data $MESSAGE_TEXT ${{ secrets.SLACK_WEBHOOK_URL }}
 
   release:

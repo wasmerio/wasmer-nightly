@@ -144,6 +144,12 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: dist
+      - name: Post to Slack on failure
+        if: ${{ failure() }}
+        run: |
+          ACTIONS_URL=$(printf "https://github.com/%s/actions/runs/%s" $GITHUB_REPOSITORY $GITHUB_RUN_ID)
+          MESSAGE_TEXT=$(printf '{"text":":fire: Build failed :fire:. %s"}' $ACTIONS_URL)
+          curl -X POST -H 'Content-type: application/json' --data $MESSAGE_TEXT ${{ secrets.SLACK_WEBHOOK_URL }}
 
   release:
     needs: [setup, build]
@@ -204,3 +210,9 @@ jobs:
           asset_path: artifacts/wasmer-linux-aarch64/wasmer-linux-aarch64.tar.gz
           asset_name: wasmer-linux-aarch64.tar.gz
           asset_content_type: application/gzip
+      - name: Post to Slack on failure
+        if: ${{ failure() }}
+        run: |
+          ACTIONS_URL=$(printf "https://github.com/%s/actions/runs/%s" $GITHUB_REPOSITORY $GITHUB_RUN_ID)
+          MESSAGE_TEXT=$(printf '{"text":":fire: Publishing release failed :fire:. %s"}' $ACTIONS_URL)
+          curl -X POST -H 'Content-type: application/json' --data $MESSAGE_TEXT ${{ secrets.SLACK_WEBHOOK_URL }}

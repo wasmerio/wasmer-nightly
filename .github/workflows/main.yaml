@@ -56,7 +56,7 @@ jobs:
             rust: 1.46.0
             artifact_name: 'wasmer-windows-amd64'
           - build: linux-aarch64
-            os: [self-hosted, linux, ARM64]
+            os: [self-hosted, Linux, ARM64]
             rust: 1.46.0
             llvm_url: 'https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/clang+llvm-10.0.0-aarch64-linux-gnu.tar.xz'
             artifact_name: 'wasmer-linux-aarch64'

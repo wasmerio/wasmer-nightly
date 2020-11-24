@@ -100,7 +100,7 @@ jobs:
             target/*/deps
           key: ${{ matrix.os }}-${{ matrix.rust }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
-            ${{ matrix.os }}-${{ matrix.rust }}-
+            ${{ matrix.os }}-${{ matrix.rust }}-${{ hashFiles('Cargo.lock') }}
       # # Install sccache
       # - uses: actions/cache@master
       #   with:

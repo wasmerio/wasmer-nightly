@@ -144,7 +144,7 @@ jobs:
       - name: Build Wapm binary
         run: make build-wapm
       - name: Package Wasmer
-        run: make package
+        run: make distribution
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:

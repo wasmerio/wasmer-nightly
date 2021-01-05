@@ -42,22 +42,22 @@ jobs:
         include:
           - build: linux
             os: ubuntu-18.04
-            rust: 1.47.0
+            rust: 1.48
             llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/10.x/linux-amd64.tar.gz'
             artifact_name: 'wasmer-linux-amd64'
           - build: macos
             os: macos-latest
-            rust: 1.47.0
+            rust: 1.48
             llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/10.x/darwin-amd64.tar.gz'
             artifact_name: 'wasmer-macos-amd64'
           - build: windows
             os: windows-latest
-            rust: 1.47.0
+            rust: 1.48
             llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/10.x/windows-amd64.tar.gz'
             artifact_name: 'wasmer-windows-amd64'
           - build: linux-aarch64
             os: [self-hosted, Linux, ARM64]
-            rust: 1.47.0
+            rust: 1.48
             llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/10.x/linux-aarch64.tar.gz'
             artifact_name: 'wasmer-linux-aarch64'
     env:

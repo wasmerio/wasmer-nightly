@@ -4,6 +4,7 @@ env:
   RUST_BACKTRACE: 1
 
 on:
+  pull_request:
   schedule:
     - cron: '59 23 * * *'
   workflow_dispatch:
@@ -14,27 +15,21 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.setup.outputs.VERSION }}
-      DOING_RELEASE: ${{ steps.setup.outputs.DOING_RELEASE }}
     steps:
       - name: Set up env vars
         id: setup
         shell: bash
         run: |
-          DOING_RELEASE=1
           VERSION="wasmer-nightly-$(date +'%Y-%m-%d' -d 'yesterday')"
           echo ::set-output name=VERSION::${VERSION}
-          echo ::set-output name=DOING_RELEASE::${DOING_RELEASE}
           echo $VERSION
-          echo $DOING_RELEASE
       - name: Double checking
         run: |
           echo ${{ steps.setup.outputs.VERSION }}
-          echo ${{ steps.setup.outputs.DOING_RELEASE }}
   build:
     name: Build on ${{ matrix.build }}
     runs-on: ${{ matrix.os }}
     needs: setup
-    if: needs.setup.outputs.DOING_RELEASE == '1'
     strategy:
       fail-fast: false
       matrix:
@@ -166,7 +161,7 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: dist
       - name: Post to Slack on failure
-        if: ${{ failure() }}
+        if: failure() && (github.event == 'schedule' || github.ref == 'refs/heads/master')
         run: |
           ACTIONS_URL=$(printf "https://github.com/%s/actions/runs/%s" $GITHUB_REPOSITORY $GITHUB_RUN_ID)
           MESSAGE_TEXT=$(printf '{"text":":fire: Build failed :fire:. %s"}' $ACTIONS_URL)
@@ -175,7 +170,7 @@ jobs:
   release:
     needs: [setup, build]
     runs-on: ubuntu-latest
-    if: needs.setup.outputs.DOING_RELEASE == '1'
+    if: github.event == 'schedule' || github.ref == 'refs/heads/master'
     steps:
       - name: Download The Artifacts
         uses: actions/download-artifact@v2

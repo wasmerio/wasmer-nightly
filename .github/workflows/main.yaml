@@ -40,6 +40,11 @@ jobs:
             rust: 1.48
             llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/10.x/linux-amd64.tar.gz'
             artifact_name: 'wasmer-linux-amd64'
+          - build: linux-musl-x64
+            os: ubuntu-18.04
+            rust: 1.48
+            target: x86_64-unknown-linux-musl
+            artifact_name: 'wasmer-linux-musl-amd64'
           - build: macos
             os: macos-latest
             rust: 1.48
@@ -65,15 +70,21 @@ jobs:
           repository: 'wasmerio/wasmer'
           ref: 'master'
       - name: Set up libstdc++ on Linux
+        if: matrix.build == 'linux-x64'
         run: |
           sudo apt-get update -y
           sudo apt-get install -y --allow-downgrades libstdc++6=8.4.0-1ubuntu1~18.04
           sudo apt-get install --reinstall g++-8
-        if: matrix.os == 'ubuntu-18.04'
+      - name: Set up musl on Linux
+        if: matrix.build == 'linux-musl-x64'
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y musl-dev musl-tools
       - name: Install Rust ${{ matrix.rust }}
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
+          target: ${{ matrix.target }}
           override: true
       #- name: Cache
       #  uses: actions/cache@master
@@ -113,7 +124,7 @@ jobs:
         #   echo "LLVM_SYS_100_PREFIX=C:/llvm-10" >> $GITHUB_ENV
         #   echo "LIBCLANG_PATH=C:/llvm-10/bin/libclang.dll" >> $GITHUB_ENV
       - name: Install LLVM (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-latest' && matrix.build != 'linux-musl-x64'
         run: |
           curl --proto '=https' --tlsv1.2 -sSf ${{ matrix.llvm_url }} -L -o llvm.tar.xz
           mkdir -p ${{ env.LLVM_DIR }}
@@ -126,9 +137,19 @@ jobs:
         run: brew install automake
         if: matrix.os == 'macos-latest'
       - name: Build C API
+        if: matrix.build != 'linux-musl-x64'
         run: make build-capi
+      - name: Build C API (system libffi)
+        if: matrix.build == 'linux-musl-x64'
+        run: |
+          make build-capi-cranelift-system-libffi
       - name: Build Wasmer binary
+        if: matrix.build != 'linux-musl-x64'
         run: make build-wasmer
+      - name: Build Wasmer binary (musl)
+        if: matrix.build == 'linux-musl-x64'
+        run: |
+          LIBC=musl WASMER_CAPI_USE_SYSTEM_LIBFFI=1 make build-wasmer
       - name: Build Wapm binary
         run: make build-wapm
       - name: Install Nightly Rust for Headless

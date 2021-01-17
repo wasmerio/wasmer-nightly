@@ -227,6 +227,16 @@ jobs:
           asset_path: artifacts/wasmer-linux-amd64/wasmer.tar.gz
           asset_name: wasmer-linux-amd64.tar.gz
           asset_content_type: application/gzip
+      - name: Upload Release Asset Linux amd64 (musl)
+        id: upload-release-asset-linux-musl-amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/wasmer-linux-musl-amd64/wasmer.tar.gz
+          asset_name: wasmer-linux-musl-amd64.tar.gz
+          asset_content_type: application/gzip
       - name: Upload Release Asset Mac
         id: upload-release-asset-mac
         uses: actions/upload-release-asset@v1

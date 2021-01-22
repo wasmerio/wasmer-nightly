@@ -86,6 +86,14 @@ jobs:
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.target }}
           override: true
+          default: true
+      - name: Setup Rust target
+        run: |
+          cat << EOF > .cargo/config.toml
+          [build]
+          target = "${{ matrix.target }}"
+          EOF
+        if: matrix.target
       #- name: Cache
       #  uses: actions/cache@master
       #  with:
@@ -117,12 +125,6 @@ jobs:
       - name: Install LLVM (Windows)
         if: matrix.os == 'windows-latest'
         run: choco install llvm
-        # run: |
-        #   curl --proto '=https' --tlsv1.2 -sSf https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/LLVM-10.0.0-win64.exe -L -o llvm-installer.exe
-        #   7z x llvm-installer.exe -oC:/llvm-10
-        #   echo C:/llvm-10/bin >> $GITHUB_PATH
-        #   echo "LLVM_SYS_100_PREFIX=C:/llvm-10" >> $GITHUB_ENV
-        #   echo "LIBCLANG_PATH=C:/llvm-10/bin/libclang.dll" >> $GITHUB_ENV
       - name: Install LLVM (Unix)
         if: matrix.os != 'windows-latest' && matrix.build != 'linux-musl-x64'
         run: |
@@ -151,6 +153,7 @@ jobs:
         run: |
           LIBC=musl WASMER_CAPI_USE_SYSTEM_LIBFFI=1 make build-wasmer
       - name: Build Wapm binary
+        if: matrix.build != 'linux-musl-x64'
         run: make build-wapm
       - name: Install Nightly Rust for Headless
         uses: actions-rs/toolchain@v1
@@ -160,6 +163,7 @@ jobs:
           override: true
           components: "rust-src"
       - name: Build Minimal Wasmer Headless
+        if: matrix.build != 'linux-musl-x64'
         run: |
           cargo install xargo
           echo "" >> Cargo.toml
@@ -174,6 +178,16 @@ jobs:
           echo "codegen-units = 1" >> Cargo.toml
           echo "rpath = false" >> Cargo.toml
           make build-wasmer-headless-minimal
+      - name: Copy target binaries
+        run: |
+          mkdir -p target/release
+          cp target/${{matrix.target}}/release/wasmer* target/release
+          cp target/${{matrix.target}}/release/libwasmer* target/release
+          if [ -d "wapm-cli" ]; then
+            mkdir -p wapm-cli/target/release
+            cp wapm-cli/target/${{matrix.target}}/release/wapm* wapm-cli/target/release
+          fi
+        if: matrix.target
       - name: Package Wasmer
         run: make distribution
       - name: Upload Artifacts
@@ -181,6 +195,7 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: dist
+          retention-days: 1
       - name: Post to Slack on failure
         if: failure() && (github.event == 'schedule' || github.ref == 'refs/heads/master')
         run: |

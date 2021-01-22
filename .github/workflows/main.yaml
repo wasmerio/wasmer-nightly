@@ -42,7 +42,7 @@ jobs:
             artifact_name: 'wasmer-linux-amd64'
           - build: linux-musl-x64
             os: ubuntu-18.04
-            rust: 1.48
+            rust: 1.48-x86_64-unknown-linux-musl
             target: x86_64-unknown-linux-musl
             artifact_name: 'wasmer-linux-musl-amd64'
           - build: macos
@@ -181,6 +181,7 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: dist
+          retention-days: 1
       - name: Post to Slack on failure
         if: failure() && (github.event == 'schedule' || github.ref == 'refs/heads/master')
         run: |

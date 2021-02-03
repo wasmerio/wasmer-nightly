@@ -38,7 +38,7 @@ jobs:
           - build: linux
             os: ubuntu-18.04
             rust: 1.48
-            llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/10.x/linux-amd64.tar.gz'
+            llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/linux-amd64.tar.gz'
             artifact_name: 'wasmer-linux-amd64'
           - build: linux-musl-x64
             os: ubuntu-18.04
@@ -48,17 +48,17 @@ jobs:
           - build: macos
             os: macos-latest
             rust: 1.48
-            llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/10.x/darwin-amd64.tar.gz'
+            llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/darwin-amd64.tar.gz'
             artifact_name: 'wasmer-macos-amd64'
           - build: windows
             os: windows-latest
             rust: 1.48
-            llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/10.x/windows-amd64.tar.gz'
+            llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/windows-amd64.tar.gz'
             artifact_name: 'wasmer-windows-amd64'
           - build: linux-aarch64
             os: [self-hosted, Linux, ARM64]
             rust: 1.48
-            llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/10.x/linux-aarch64.tar.gz'
+            llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/linux-aarch64.tar.gz'
             artifact_name: 'wasmer-linux-aarch64'
     env:
       CARGO_SCCACHE_VERSION: 0.2.13
@@ -118,11 +118,11 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: choco install llvm
         # run: |
-        #   curl --proto '=https' --tlsv1.2 -sSf https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/LLVM-10.0.0-win64.exe -L -o llvm-installer.exe
-        #   7z x llvm-installer.exe -oC:/llvm-10
-        #   echo C:/llvm-10/bin >> $GITHUB_PATH
-        #   echo "LLVM_SYS_100_PREFIX=C:/llvm-10" >> $GITHUB_ENV
-        #   echo "LIBCLANG_PATH=C:/llvm-10/bin/libclang.dll" >> $GITHUB_ENV
+        #   curl --proto '=https' --tlsv1.2 -sSf https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.1/LLVM-11.0.1-win64.exe -L -o llvm-installer.exe
+        #   7z x llvm-installer.exe -oC:/llvm-11
+        #   echo C:/llvm-11/bin >> $GITHUB_PATH
+        #   echo "LLVM_SYS_110_PREFIX=C:/llvm-11" >> $GITHUB_ENV
+        #   echo "LIBCLANG_PATH=C:/llvm-11/bin/libclang.dll" >> $GITHUB_ENV
       - name: Install LLVM (Unix)
         if: matrix.os != 'windows-latest' && matrix.build != 'linux-musl-x64'
         run: |
@@ -130,9 +130,9 @@ jobs:
           mkdir -p ${{ env.LLVM_DIR }}
           tar xf llvm.tar.xz --strip-components=1 -C ${{ env.LLVM_DIR }}
           echo "${{ env.LLVM_DIR }}/bin" >> $GITHUB_PATH
-          echo "LLVM_SYS_100_PREFIX=${{ env.LLVM_DIR }}" >> $GITHUB_ENV
+          echo "LLVM_SYS_110_PREFIX=${{ env.LLVM_DIR }}" >> $GITHUB_ENV
         env:
-          LLVM_DIR: ${{ github.workspace }}/llvm-10
+          LLVM_DIR: ${{ github.workspace }}/llvm-11
       - name: Set up dependencies for Mac OS
         run: brew install automake
         if: matrix.os == 'macos-latest'

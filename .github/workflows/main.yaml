@@ -40,11 +40,6 @@ jobs:
             rust: 1.49
             llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/linux-amd64.tar.gz'
             artifact_name: 'wasmer-linux-amd64'
-          - build: linux-musl-x64
-            os: ubuntu-18.04
-            rust: 1.49
-            target: x86_64-unknown-linux-musl
-            artifact_name: 'wasmer-linux-musl-amd64'
           - build: macos
             os: macos-latest
             rust: 1.49
@@ -74,11 +69,6 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y --allow-downgrades libstdc++6=8.4.0-1ubuntu1~18.04
           sudo apt-get install --reinstall g++-8
-      - name: Set up musl on Linux
-        if: matrix.build == 'linux-musl-x64'
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y musl-dev musl-tools
       - name: Install Rust ${{ matrix.rust }}
         uses: actions-rs/toolchain@v1
         with:
@@ -124,24 +114,21 @@ jobs:
         env:
           LLVM_DIR: ${{ github.workspace }}/llvm-11
       - name: Set up dependencies for Mac OS
-        run: brew install automake
         if: matrix.os == 'macos-latest'
+        run: |
+          brew install automake
+          # using gnu-tar is a workaround for https://github.com/actions/cache/issues/403
+          brew install gnu-tar
+          echo PATH="/usr/local/opt/gnu-tar/libexec/gnubin:$PATH" >> $GITHUB_ENV
       - name: Build C API
-        if: matrix.build != 'linux-musl-x64'
-        run: make build-capi
-      - name: Build C API (system libffi)
-        if: matrix.build == 'linux-musl-x64'
         run: |
-          make build-capi-cranelift-system-libffi
+          make build-capi
       - name: Build Wasmer binary
-        if: matrix.build != 'linux-musl-x64'
-        run: make build-wasmer
-      - name: Build Wasmer binary (musl)
-        if: matrix.build == 'linux-musl-x64'
         run: |
-          LIBC=musl WASMER_CAPI_USE_SYSTEM_LIBFFI=1 make build-wasmer
+          make build-wasmer
       - name: Build Wapm binary
-        run: make build-wapm
+        run: |
+          make build-wapm
       - name: Install Nightly Rust for Headless
         uses: actions-rs/toolchain@v1
         with:
@@ -164,13 +151,15 @@ jobs:
           echo "codegen-units = 1" >> Cargo.toml
           echo "rpath = false" >> Cargo.toml
           make build-wasmer-headless-minimal
-      - name: Package Wasmer
-        run: make distribution
+      - name: Dist
+        run: |
+          make distribution
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.artifact_name }}
           path: dist
+          if-no-files-found: error
       - name: Post to Slack on failure
         if: failure() && (github.event == 'schedule' || github.ref == 'refs/heads/master')
         run: |

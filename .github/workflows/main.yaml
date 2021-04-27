@@ -170,13 +170,13 @@ jobs:
   build-docker:
     name: Build on ${{ matrix.build }}
     runs-on: ubuntu-latest
+    container: alpine:latest
     needs: setup
     strategy:
       fail-fast: false
       matrix:
         include:
           - build: linux-musl-x64
-            image: alpine:latest
             rust: "1.50"
             artifact_name: 'wasmer-linux-musl-amd64'
     steps:
@@ -184,40 +184,34 @@ jobs:
         with:
           repository: 'wasmerio/wasmer'
           ref: 'master'
-      - uses: addnab/docker-run-action@v3
-        with:
-          image: ${{ matrix.image }}
-          options: -v ${{ github.workspace }}:/work
-          run: |
-            set -e
+      - name: musl build
+        run: |
+          set -e
 
-            # Set up tools
-            apk add musl-dev curl make libtool libffi-dev gcc automake autoconf git
+          # Set up tools
+          apk add musl-dev curl make libtool libffi-dev gcc automake autoconf git
 
-            # Install Rust ${{ matrix.rust }}
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh
-            sh ./rustup.sh -y
-            source ~/.cargo/env
-            rm ./rustup.sh
+          # Install Rust ${{ matrix.rust }}
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh
+          sh ./rustup.sh -y
+          source ~/.cargo/env
+          rm ./rustup.sh
 
-            # Set up Rust
-            rustup toolchain install ${{ matrix.rust }}
-            rustup default ${{ matrix.rust }}
+          # Set up Rust
+          rustup toolchain install ${{ matrix.rust }}
+          rustup default ${{ matrix.rust }}
 
-            # Change working directory
-            cd /work
+          # Build C API
+          make build-capi
 
-            # Build C API
-            make build-capi
+          # Build Wasmer binary
+          make build-wasmer
 
-            # Build Wasmer binary
-            make build-wasmer
+          # Build Wapm binary
+          make build-wapm
 
-            # Build Wapm binary
-            make build-wapm
-
-            # Dist
-            make distribution
+          # Dist
+          make distribution
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:

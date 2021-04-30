@@ -37,23 +37,19 @@ jobs:
         include:
           - build: linux
             os: ubuntu-18.04
-            rust: "1.50"
             llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/linux-amd64.tar.gz'
             artifact_name: 'wasmer-linux-amd64'
           - build: macos
             os: macos-latest
-            rust: "1.50"
             llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/darwin-amd64.tar.gz'
             artifact_name: 'wasmer-macos-amd64'
           - build: windows
             os: windows-latest
-            rust: "1.50"
             artifact_name: 'wasmer-windows-amd64'
-          - build: linux-aarch64
-            os: [self-hosted, Linux, ARM64]
-            rust: "1.50"
-            llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/linux-aarch64.tar.gz'
-            artifact_name: 'wasmer-linux-aarch64'
+          #- build: linux-aarch64
+          #  os: [self-hosted, Linux, ARM64]
+          #  llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/linux-aarch64.tar.gz'
+          #  artifact_name: 'wasmer-linux-aarch64'
     env:
       CARGO_SCCACHE_VERSION: 0.2.13
       SCCACHE_AZURE_BLOB_CONTAINER: wasmerstoragesccacheblob
@@ -69,10 +65,9 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y --allow-downgrades libstdc++6=8.4.0-1ubuntu1~18.04
           sudo apt-get install --reinstall g++-8
-      - name: Install Rust ${{ matrix.rust }}
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: ${{ matrix.rust }}
           target: ${{ matrix.target }}
           override: true
       #- name: Cache
@@ -194,15 +189,11 @@ jobs:
             # Set up tools
             apk add musl-dev curl make libtool libffi-dev gcc automake autoconf git
 
-            # Install Rust ${{ matrix.rust }}
+            # Install Rust
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh
             sh ./rustup.sh -y
             source ~/.cargo/env
             rm ./rustup.sh
-
-            # Set up Rust
-            rustup toolchain install ${{ matrix.rust }}
-            rustup default ${{ matrix.rust }}
 
             # Change working directory
             cd /work

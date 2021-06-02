@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [linux, macos, windows, linux-aarch64]
+        build: [linux, macos, windows]
         include:
           - build: linux
             os: ubuntu-18.04

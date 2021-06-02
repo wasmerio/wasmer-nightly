@@ -149,6 +149,7 @@ jobs:
           override: true
           components: "rust-src"
       - name: Build Minimal Wasmer Headless
+        if: matrix.build != 'linux-musl-x64'
         run: |
           cargo install xargo
           echo "" >> Cargo.toml

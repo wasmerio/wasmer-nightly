@@ -78,7 +78,7 @@ jobs:
       - name: Set up base deps on musl
         if: matrix.build == 'linux-musl-x64'
         run: |
-            apk add musl-dev curl make libtool libffi-dev gcc automake autoconf git openssl-dev g++
+            apk add build-base musl-dev curl make libtool libffi-dev gcc automake autoconf git openssl-dev g++
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -238,16 +238,16 @@ jobs:
           asset_path: artifacts/wasmer-macos-amd64/wasmer.tar.gz
           asset_name: wasmer-darwin-amd64.tar.gz
           asset_content_type: application/gzip
-      - name: Upload Release Asset Linux aarch64
-        id: upload-release-asset-linux-aarch64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/wasmer-linux-aarch64/wasmer.tar.gz
-          asset_name: wasmer-linux-aarch64.tar.gz
-          asset_content_type: application/gzip
+      #- name: Upload Release Asset Linux aarch64
+      #  id: upload-release-asset-linux-aarch64
+      #  uses: actions/upload-release-asset@v1
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  with:
+      #    upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #    asset_path: artifacts/wasmer-linux-aarch64/wasmer.tar.gz
+      #    asset_name: wasmer-linux-aarch64.tar.gz
+      #    asset_content_type: application/gzip
       - name: Post to Slack on failure
         if: ${{ failure() }}
         run: |

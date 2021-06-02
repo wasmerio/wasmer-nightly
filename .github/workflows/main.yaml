@@ -33,23 +33,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [linux, macos, windows]
         include:
           - build: linux
             os: ubuntu-18.04
             llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/linux-amd64.tar.gz'
             artifact_name: 'wasmer-linux-amd64'
+            use_sccache: true
           - build: macos
             os: macos-latest
             llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/darwin-amd64.tar.gz'
             artifact_name: 'wasmer-macos-amd64'
+            use_sccache: true
           - build: windows
             os: windows-latest
             artifact_name: 'wasmer-windows-amd64'
+            use_sccache: true
           #- build: linux-aarch64
           #  os: [self-hosted, Linux, ARM64]
           #  llvm_url: 'https://github.com/wasmerio/llvm-custom-builds/releases/download/11.x/linux-aarch64.tar.gz'
           #  artifact_name: 'wasmer-linux-aarch64'
+          #  use_sccache: true
+          - build: linux-musl-x64
+            os: ubuntu-latest
+            container: alpine:latest
+            artifact_name: 'wasmer-linux-musl-amd64'
+            run_integration_tests: true
+            use_sccache: false
+    container: ${{ matrix.container }}
     env:
       CARGO_SCCACHE_VERSION: 0.2.13
       SCCACHE_AZURE_BLOB_CONTAINER: wasmerstoragesccacheblob
@@ -65,6 +75,10 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y --allow-downgrades libstdc++6=8.4.0-1ubuntu1~18.04
           sudo apt-get install --reinstall g++-8
+      - name: Set up base deps on musl
+        if: matrix.build == 'linux-musl-x64'
+        run: |
+            apk add build-base musl-dev curl make libtool libffi-dev gcc automake autoconf git openssl-dev g++
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -86,14 +100,17 @@ jobs:
       #      ${{ matrix.os }}-${{ matrix.rust }}-${{ hashFiles('Cargo.lock') }}
       # # Install sccache
       # - uses: actions/cache@master
+      #   if: matrix.use_sccache
       #   with:
       #     path: ${{ runner.tool_cache }}/cargo-sccache
       #     key: cargo-sccache-bin-${{ env.CARGO_SCCACHE_VERSION }}
       # - name: Install sccache
+      #   if: matrix.use_sccache
       #   run: |
       #     echo "${{ runner.tool_cache }}/cargo-sccache/bin" >> $GITHUB_PATH
       #     cargo install sccache --version ${{ env.CARGO_SCCACHE_VERSION }} --root ${{ runner.tool_cache }}/cargo-sccache
       # - name: Start sccache
+      #   if: matrix.use_sccache
       #   run: |
       #     ${{ runner.tool_cache }}/cargo-sccache/bin/sccache --start-server
       #     ${{ runner.tool_cache }}/cargo-sccache/bin/sscache -s
@@ -132,6 +149,7 @@ jobs:
           override: true
           components: "rust-src"
       - name: Build Minimal Wasmer Headless
+        if: matrix.build != 'linux-musl-x64'
         run: |
           cargo install xargo
           echo "" >> Cargo.toml
@@ -162,63 +180,8 @@ jobs:
           MESSAGE_TEXT=$(printf '{"text":":fire: Build failed :fire:. %s"}' $ACTIONS_URL)
           curl -X POST -H 'Content-type: application/json' --data "$MESSAGE_TEXT" ${{ secrets.SLACK_WEBHOOK_URL }}
 
-  build-docker:
-    name: Build on ${{ matrix.build }}
-    runs-on: ubuntu-latest
-    needs: setup
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - build: linux-musl-x64
-            image: alpine:latest
-            rust: "1.50"
-            artifact_name: 'wasmer-linux-musl-amd64'
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          repository: 'wasmerio/wasmer'
-          ref: 'master'
-      - uses: addnab/docker-run-action@v3
-        with:
-          image: ${{ matrix.image }}
-          options: -v ${{ github.workspace }}:/work
-          run: |
-            set -e
-
-            # Set up tools
-            apk add musl-dev curl make libtool libffi-dev gcc automake autoconf git
-
-            # Install Rust
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh
-            sh ./rustup.sh -y
-            source ~/.cargo/env
-            rm ./rustup.sh
-
-            # Change working directory
-            cd /work
-
-            # Build C API
-            make build-capi
-
-            # Build Wasmer binary
-            make build-wasmer
-
-            # Build Wapm binary
-            make build-wapm
-
-            # Dist
-            make distribution
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ matrix.artifact_name }}
-          path: dist
-          if-no-files-found: error
-          retention-days: 1
-
   release:
-    needs: [setup, build, build-docker]
+    needs: [setup, build]
     runs-on: ubuntu-latest
     if: github.event == 'schedule' || github.ref == 'refs/heads/master'
     steps:
@@ -276,16 +239,16 @@ jobs:
           asset_path: artifacts/wasmer-macos-amd64/wasmer.tar.gz
           asset_name: wasmer-darwin-amd64.tar.gz
           asset_content_type: application/gzip
-      - name: Upload Release Asset Linux aarch64
-        id: upload-release-asset-linux-aarch64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/wasmer-linux-aarch64/wasmer.tar.gz
-          asset_name: wasmer-linux-aarch64.tar.gz
-          asset_content_type: application/gzip
+      #- name: Upload Release Asset Linux aarch64
+      #  id: upload-release-asset-linux-aarch64
+      #  uses: actions/upload-release-asset@v1
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  with:
+      #    upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #    asset_path: artifacts/wasmer-linux-aarch64/wasmer.tar.gz
+      #    asset_name: wasmer-linux-aarch64.tar.gz
+      #    asset_content_type: application/gzip
       - name: Post to Slack on failure
         if: ${{ failure() }}
         run: |
